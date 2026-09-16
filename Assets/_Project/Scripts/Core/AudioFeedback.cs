@@ -28,7 +28,8 @@ namespace MyIndieGame.Core
 
         void Play(AudioClip clip)
         {
-            if (clip != null) source.PlayOneShot(clip, volume);
+            if (!AppSettings.SoundEnabled || clip == null || source == null) return;
+            source.PlayOneShot(clip, volume);
         }
     }
 }
