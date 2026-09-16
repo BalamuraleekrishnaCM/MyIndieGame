@@ -13,9 +13,11 @@ namespace MyIndieGame.Core
             initialized = true;
 
             GameObject root = new GameObject("AppSystems");
+            Object.DontDestroyOnLoad(root);
             root.AddComponent<GameSession>();
             root.AddComponent<GameFeel>();
             root.AddComponent<AudioFeedback>();
+            root.AddComponent<VFXFeedback>();
         }
     }
 }
