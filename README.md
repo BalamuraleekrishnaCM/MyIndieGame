@@ -1,44 +1,70 @@
 # MyIndieGame 🎮
 
-A mobile casual-game collection built for rapid experimentation. The first prototype contains **10 mini games** inside one simple game hub.
+A simple and addictive hyper-casual mobile game collection made for fun, experimentation, and rapid gameplay iteration.
 
-## 🎮 Mini Games
+## 🎯 Current Prototype
 
-1. Tap Rush
-2. Color Match
-3. Stack It
-4. Dodge Line
-5. Coin Catch
-6. Memory Flip
-7. One Tap Jump
-8. Ball Sort
-9. Parking Puzzle
-10. Merge 2048
+The prototype contains a single game hub with 10 quick casual mini-games:
 
-## 🛠️ Stack
+1. Tap Rush — tap a moving target.
+2. Color Match — select the requested color.
+3. Stack It — stop the moving block at the right moment.
+4. Dodge Line — switch lanes and avoid the obstacle.
+5. Coin Catch — collect coins and avoid hazards.
+6. Memory Flip — find matching pairs.
+7. One Tap Jump — time jumps over obstacles.
+8. Ball Sort — move balls through the sorting challenge.
+9. Parking Puzzle — clear the route and park the car.
+10. Merge 2048 — merge equal-number tiles.
+
+## 🛠️ Technology
 
 - Unity
 - C#
 - Mobile-first UI
-- Built-in Unity UI for the prototype
+- No external package dependency for the prototype
 
-## 🚀 Prototype
+## 📁 Unity Structure
 
-The prototype uses a single runtime controller and a one-click editor scene builder so the game collection can be tested quickly before investing in final art, audio, animations, monetization, analytics, and separate scenes.
+```text
+Assets/
+└── _Project/
+    └── Scripts/
+        └── MiniGames/
+            └── MiniGameCollection.cs
+```
 
-### Build the prototype
+## ▶️ Prototype Setup
 
-1. Open the Unity project.
-2. Ensure `Assets/_Project/Scripts/MiniGames/MiniGameCollection.cs` and the Editor builder are present.
-3. In Unity choose **MyIndieGame → Build 10-Game Prototype**.
-4. Open `Assets/_Project/Scenes/Prototype.unity` and press Play.
+1. Create/open a Unity project.
+2. Add `Assets/_Project/Scripts/MiniGames/MiniGameCollection.cs`.
+3. Create an empty GameObject in a scene.
+4. Add a Canvas component to it.
+5. Add `MiniGameCollection` to the same GameObject.
+6. Press Play.
+
+The script creates the prototype UI at runtime, so no imported art package is required.
+
+## 🚧 Status
+
+**V0.2 — Playable mechanics prototype.**
+
+The ten games now have individual interactions, scoring, timers, retry/home flow, and basic win/lose states. Visual assets, audio, haptics, persistence, and deeper game-specific mechanics are planned for subsequent iterations.
 
 ## 🌿 Git Flow
 
-- `main` — stable releases
-- `develop` — integration branch
-- `feature/mini-games-prototype` — current prototype work
+```text
+main
+  ↑
+develop
+  ↑
+feature/gameplay-polish
+```
 
-## 📌 Next Phase
+## 📌 Development Principles
 
-Replace placeholder UI with individual game scenes/prefabs, real mechanics, shared navigation, persistence, audio, haptics, achievements, ads/IAP, analytics, and mobile optimization.
+1. Prototype first.
+2. Keep each game understandable within seconds.
+3. Reuse shared systems where practical.
+4. Optimize for mobile performance.
+5. Polish only after the core mechanic is fun.
