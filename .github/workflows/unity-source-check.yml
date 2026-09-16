@@ -1,0 +1,16 @@
+name: Unity Source Check
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  source-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check C# files are present
+        shell: bash
+        run: |
+          test -f Assets/_Project/Scripts/MiniGames/MiniGameCollection.cs
+          grep -q "class MiniGameCollection" Assets/_Project/Scripts/MiniGames/MiniGameCollection.cs
