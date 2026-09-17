@@ -1,0 +1,42 @@
+name: Repository Validation
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  repository-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate Unity project files
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f ProjectSettings/ProjectVersion.txt
+          test -f Packages/manifest.json
+          test -d Assets
+
+      - name: Validate required game source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f Assets/_Project/Scripts/MiniGames/MiniGameCollection.cs
+          test -f Assets/_Project/Scripts/MiniGames/TapRushGame.cs
+          test -f Assets/_Project/Scripts/MiniGames/ProductionMiniGameBase.cs
+          test -f Assets/_Project/Scripts/MiniGames/CoinCatchGame.cs
+          test -f Assets/_Project/Scripts/MiniGames/MemoryFlipGame.cs
+          test -f Assets/_Project/Scripts/MiniGames/OneTapJumpGame.cs
+
+      - name: Validate no obvious secret files
+        shell: bash
+        run: |
+          set -euo pipefail
+          if find . -type f \( -name '*.p12' -o -name '*.keystore' -o -name '*.jks' \) -not -path './.git/*' | grep -q .; then
+            echo 'Signing material must not be committed.'
+            exit 1
+          fi
