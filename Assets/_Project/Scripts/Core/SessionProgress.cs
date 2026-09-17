@@ -25,7 +25,8 @@ namespace MyIndieGame.Core
         public static void AddScore(int amount)
         {
             if (!IsActive || amount == 0) return;
-            CurrentScore = Mathf.Max(0, CurrentScore + amount);
+            CurrentScore = SafeAdd(CurrentScore, amount);
+            if (CurrentScore < 0) CurrentScore = 0;
         }
 
         public static bool Finish()
@@ -43,6 +44,11 @@ namespace MyIndieGame.Core
                 GameSession.Instance.RecordGamePlayed();
             }
 
+            PlayerStatsService.RecordGame(finalScore, false);
+            MissionService.RecordGame(finalScore);
+            AnalyticsService.RecordGameCompleted(gameId, finalScore, LastReward);
+            AchievementService.Evaluate(gameId, finalScore, GameSession.Instance != null ? GameSession.Instance.Coins : 0, PlayerStatsService.GamesPlayed);
+
             CurrentGameId = null;
             CurrentScore = 0;
             return best;
@@ -53,6 +59,13 @@ namespace MyIndieGame.Core
             CurrentGameId = null;
             CurrentScore = 0;
             LastReward = 0;
+        }
+
+        static int SafeAdd(int current, int amount)
+        {
+            if (amount > 0 && current > int.MaxValue - amount) return int.MaxValue;
+            if (amount < 0 && current < int.MinValue - amount) return int.MinValue;
+            return current + amount;
         }
     }
 }
