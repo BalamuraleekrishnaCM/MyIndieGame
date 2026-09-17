@@ -11,6 +11,7 @@ namespace MyIndieGame.Core
         public int GamesPlayed;
         public int TotalScore;
         public int Wins;
+        public long Version;
         public long UpdatedAtUnix;
     }
 }
