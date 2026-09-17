@@ -18,20 +18,28 @@ namespace MyIndieGame.Core
             if (Instance != null && Instance != this) { Destroy(gameObject); return; }
             Instance = this;
             DontDestroyOnLoad(gameObject);
-            Coins = PlayerPrefs.GetInt(CoinsKey, 0);
-            TotalGamesPlayed = PlayerPrefs.GetInt(PlayedKey, 0);
+            Coins = Mathf.Max(0, PlayerPrefs.GetInt(CoinsKey, 0));
+            TotalGamesPlayed = Mathf.Max(0, PlayerPrefs.GetInt(PlayedKey, 0));
         }
 
         public void AddCoins(int amount)
         {
             if (amount <= 0) return;
-            Coins += amount;
+            Coins = SafeAdd(Coins, amount);
             Save();
+        }
+
+        public bool TrySpendCoins(int amount)
+        {
+            if (amount <= 0 || Coins < amount) return false;
+            Coins -= amount;
+            Save();
+            return true;
         }
 
         public void RecordGamePlayed()
         {
-            TotalGamesPlayed++;
+            TotalGamesPlayed = SafeAdd(TotalGamesPlayed, 1);
             Save();
         }
 
@@ -41,6 +49,11 @@ namespace MyIndieGame.Core
             PlayerPrefs.SetInt(PlayedKey, TotalGamesPlayed);
             PlayerPrefs.Save();
             Changed?.Invoke();
+        }
+
+        static int SafeAdd(int current, int amount)
+        {
+            return current > int.MaxValue - amount ? int.MaxValue : current + amount;
         }
     }
 }
