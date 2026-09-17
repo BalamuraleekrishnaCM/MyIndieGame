@@ -7,7 +7,6 @@ namespace MyIndieGame.MiniGames
     public abstract class ProductionMiniGameBase : MonoBehaviour, IMiniGame
     {
         [SerializeField] float durationSeconds = 30f;
-
         MiniGameSession session;
         float remaining;
         bool paused;
@@ -15,10 +14,8 @@ namespace MyIndieGame.MiniGames
         public abstract string GameId { get; }
         public bool IsRunning => session != null && session.IsActive && !paused;
         public int Score => session?.Score ?? 0;
-
         public event Action<int> ScoreChanged;
         public event Action<int> Completed;
-
         protected virtual float DurationSeconds => Mathf.Max(1f, durationSeconds);
 
         protected virtual void Awake()
@@ -72,7 +69,7 @@ namespace MyIndieGame.MiniGames
 
         protected void AddScore(int amount)
         {
-            if (!IsRunning || amount <= 0) return;
+            if (!IsRunning || amount == 0) return;
             session.AddScore(amount);
         }
 
@@ -86,7 +83,12 @@ namespace MyIndieGame.MiniGames
         {
             if (!IsRunning) return;
             remaining -= Time.unscaledDeltaTime;
-            if (remaining <= 0f) CompleteGame();
+            if (remaining <= 0f)
+            {
+                remaining = 0f;
+                CompleteGame();
+                return;
+            }
             Tick(remaining);
         }
 
@@ -96,14 +98,8 @@ namespace MyIndieGame.MiniGames
         protected virtual void OnGameResumed() { }
         protected virtual void OnGameEnded() { }
         protected virtual void Tick(float remainingSeconds) { }
-
-        void HandleScoreChanged(int value) => ScoreChanged?.Invoke(value);
-        void HandleCompleted(int value)
-        {
-            Completed?.Invoke(value);
-            OnGameCompleted(value);
-        }
-
         protected virtual void OnGameCompleted(int finalScore) { }
+        void HandleScoreChanged(int value) => ScoreChanged?.Invoke(value);
+        void HandleCompleted(int value) { Completed?.Invoke(value); OnGameCompleted(value); }
     }
 }
