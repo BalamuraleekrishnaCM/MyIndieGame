@@ -44,16 +44,16 @@ jobs:
           test -f Assets/_Project/Scripts/Core/SessionProgress.cs
           test -f Assets/_Project/Scripts/Core/MiniGameRunner.cs
 
-      - name: Validate required game source
+      - name: Validate all ten game cores
         shell: bash
         run: |
           set -euo pipefail
-          test -f Assets/_Project/Scripts/MiniGames/MiniGameCollection.cs
-          test -f Assets/_Project/Scripts/MiniGames/TapRushGame.cs
-          test -f Assets/_Project/Scripts/MiniGames/ProductionMiniGameBase.cs
-          test -f Assets/_Project/Scripts/MiniGames/CoinCatchGame.cs
-          test -f Assets/_Project/Scripts/MiniGames/MemoryFlipGame.cs
-          test -f Assets/_Project/Scripts/MiniGames/OneTapJumpGame.cs
+          for file in \
+            TapRushGame.cs ColorMatchGame.cs StackItGame.cs DodgeLineGame.cs \
+            CoinCatchGame.cs MemoryFlipGame.cs OneTapJumpGame.cs BallSortGame.cs \
+            ParkingPuzzleGame.cs Merge2048Game.cs; do
+            test -f "Assets/_Project/Scripts/MiniGames/$file"
+          done
 
       - name: Validate canonical game ids
         shell: bash
