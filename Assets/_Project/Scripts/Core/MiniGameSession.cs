@@ -13,7 +13,6 @@ namespace MyIndieGame.Core
 
         public MiniGameSession(MiniGameDefinition definition) : this(definition, -1) { }
 
-        // Kept for compatibility with existing game adapters that carry a catalog index.
         public MiniGameSession(MiniGameDefinition definition, int gameIndex)
         {
             this.definition = definition ?? throw new ArgumentNullException(nameof(definition));
@@ -51,8 +50,8 @@ namespace MyIndieGame.Core
 
         public void AddScore(int amount)
         {
-            if (!IsActive || paused || amount <= 0) return;
-            Score = SafeAdd(Score, amount);
+            if (!IsActive || paused || amount == 0) return;
+            Score = amount > 0 ? SafeAdd(Score, amount) : SafeSubtract(Score, -amount);
             ScoreChanged?.Invoke(Score);
         }
 
@@ -69,8 +68,6 @@ namespace MyIndieGame.Core
             int finalScore = Score;
             IsActive = false;
             paused = false;
-
-            // Route all completed runs through the same persistence/progression pipeline.
             SessionProgress.Begin(GameId);
             SessionProgress.AddScore(finalScore);
             SessionProgress.Finish();
@@ -80,6 +77,11 @@ namespace MyIndieGame.Core
         static int SafeAdd(int current, int amount)
         {
             return current > int.MaxValue - amount ? int.MaxValue : current + amount;
+        }
+
+        static int SafeSubtract(int current, int amount)
+        {
+            return current < amount ? 0 : current - amount;
         }
     }
 }
