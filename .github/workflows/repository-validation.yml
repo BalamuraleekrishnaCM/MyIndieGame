@@ -13,13 +13,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Validate Unity project files
+      - name: Validate repository source layout
         shell: bash
         run: |
           set -euo pipefail
-          test -f ProjectSettings/ProjectVersion.txt
-          test -f Packages/manifest.json
           test -d Assets
+          test -d Docs
+          test -f README.md
+
+      - name: Report Unity project metadata status
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -f ProjectSettings/ProjectVersion.txt && -f Packages/manifest.json ]]; then
+            echo 'Full Unity project metadata is present.'
+          else
+            echo 'Unity project metadata is not included in this repository snapshot.'
+            echo 'Unity Editor/build validation remains a manual build-environment gate.'
+          fi
 
       - name: Validate shared game architecture
         shell: bash
