@@ -21,6 +21,18 @@ jobs:
           test -f Packages/manifest.json
           test -d Assets
 
+      - name: Validate shared game architecture
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f Assets/_Project/Scripts/Core/IMiniGame.cs
+          test -f Assets/_Project/Scripts/Core/MiniGameDefinition.cs
+          test -f Assets/_Project/Scripts/Core/MiniGameCatalog.cs
+          test -f Assets/_Project/Scripts/Core/GameCatalog.cs
+          test -f Assets/_Project/Scripts/Core/MiniGameSession.cs
+          test -f Assets/_Project/Scripts/Core/SessionProgress.cs
+          test -f Assets/_Project/Scripts/Core/MiniGameRunner.cs
+
       - name: Validate required game source
         shell: bash
         run: |
@@ -31,6 +43,15 @@ jobs:
           test -f Assets/_Project/Scripts/MiniGames/CoinCatchGame.cs
           test -f Assets/_Project/Scripts/MiniGames/MemoryFlipGame.cs
           test -f Assets/_Project/Scripts/MiniGames/OneTapJumpGame.cs
+
+      - name: Validate canonical game ids
+        shell: bash
+        run: |
+          set -euo pipefail
+          catalog='Assets/_Project/Scripts/Core/MiniGameCatalog.cs'
+          for id in tap_rush color_match stack_it dodge_line coin_catch memory_flip one_tap_jump ball_sort parking_puzzle merge_2048; do
+            grep -q "Id = \"$id\"" "$catalog"
+          done
 
       - name: Validate no obvious secret files
         shell: bash
