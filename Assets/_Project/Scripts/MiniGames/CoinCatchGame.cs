@@ -10,13 +10,9 @@ namespace MyIndieGame.MiniGames
         [SerializeField] int pointsPerCoin = 1;
         [SerializeField] int missPenalty = 0;
         int caught;
-
         public int Caught => caught;
 
-        protected override void ResetGame()
-        {
-            caught = 0;
-        }
+        protected override void ResetGame() => caught = 0;
 
         public void CatchCoin()
         {
@@ -28,8 +24,7 @@ namespace MyIndieGame.MiniGames
         public void MissCoin()
         {
             if (!IsRunning || missPenalty <= 0) return;
-            // Never allow a gameplay event to make the score negative.
-            AddScore(0);
+            AddScore(-missPenalty);
         }
     }
 }
