@@ -7,15 +7,22 @@ namespace MyIndieGame.Core
         public static CloudPlayerData Capture()
         {
             PlayerIdentity identity = PlayerIdentityService.Current;
+            long baseVersion = CloudSyncService.LastCloudData != null
+                ? CloudSyncService.LastCloudData.Version
+                : 0;
+
             return new CloudPlayerData
             {
-                UserId = identity?.UserId ?? string.Empty,
-                DisplayName = identity?.DisplayName ?? "Player",
-                Coins = GameSession.Instance?.Coins ?? 0,
-                GamesPlayed = GameSession.Instance?.TotalGamesPlayed ?? 0,
+                UserId = identity != null && identity.IsAuthenticated ? identity.UserId : string.Empty,
+                DisplayName = identity != null ? identity.DisplayName : "Player",
+                Coins = GameSession.Instance != null ? GameSession.Instance.Coins : 0,
+                GamesPlayed = GameSession.Instance != null ? GameSession.Instance.TotalGamesPlayed : 0,
                 TotalScore = PlayerStatsService.TotalScore,
                 Wins = PlayerStatsService.Wins,
-                Version = CloudSyncService.LastCloudData?.Version ?? 0,
+                // Version 0 is the initial unknown state. Providers should use the
+                // previous server version for compare-and-swap and assign the
+                // canonical server version after a successful write.
+                Version = baseVersion,
                 UpdatedAtUnix = System.DateTimeOffset.UtcNow.ToUnixTimeSeconds()
             };
         }

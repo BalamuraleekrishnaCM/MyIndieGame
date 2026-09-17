@@ -7,25 +7,35 @@ namespace MyIndieGame.Core
         public static int CurrentScore { get; private set; }
         public static string CurrentGameId { get; private set; }
         public static int LastReward { get; private set; }
+        public static bool IsActive => !string.IsNullOrEmpty(CurrentGameId);
 
         public static void Begin(string gameId)
         {
-            CurrentGameId = gameId;
+            if (string.IsNullOrWhiteSpace(gameId))
+            {
+                Reset();
+                return;
+            }
+
+            CurrentGameId = gameId.Trim();
             CurrentScore = 0;
             LastReward = 0;
         }
 
         public static void AddScore(int amount)
         {
+            if (!IsActive || amount == 0) return;
             CurrentScore = Mathf.Max(0, CurrentScore + amount);
         }
 
         public static bool Finish()
         {
-            if (string.IsNullOrEmpty(CurrentGameId)) return false;
+            if (!IsActive) return false;
 
-            bool best = BestScoreStore.Submit(CurrentGameId, CurrentScore);
-            LastReward = ProgressionService.CalculateReward(CurrentGameId, CurrentScore);
+            string gameId = CurrentGameId;
+            int finalScore = CurrentScore;
+            bool best = BestScoreStore.Submit(gameId, finalScore);
+            LastReward = ProgressionService.CalculateReward(gameId, finalScore);
 
             if (GameSession.Instance != null)
             {
@@ -33,7 +43,16 @@ namespace MyIndieGame.Core
                 GameSession.Instance.RecordGamePlayed();
             }
 
+            CurrentGameId = null;
+            CurrentScore = 0;
             return best;
+        }
+
+        public static void Reset()
+        {
+            CurrentGameId = null;
+            CurrentScore = 0;
+            LastReward = 0;
         }
     }
 }
