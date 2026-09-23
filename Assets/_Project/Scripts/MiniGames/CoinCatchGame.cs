@@ -1,30 +1,20 @@
+using System;
+using MyIndieGame.Core;
 using UnityEngine;
 
 namespace MyIndieGame.MiniGames
 {
-    public sealed class CoinCatchGame : ProductionMiniGameBase
+    public sealed class CoinCatchGame : MonoBehaviour, IMiniGame
     {
-        public const string Id = "coin-catch";
-        public override string GameId => Id;
-
-        [SerializeField] int pointsPerCoin = 1;
-        [SerializeField] int missPenalty = 0;
-        int caught;
-        public int Caught => caught;
-
-        protected override void ResetGame() => caught = 0;
-
-        public void CatchCoin()
-        {
-            if (!IsRunning) return;
-            caught++;
-            AddScore(Mathf.Max(0, pointsPerCoin));
-        }
-
-        public void MissCoin()
-        {
-            if (!IsRunning || missPenalty <= 0) return;
-            AddScore(-missPenalty);
-        }
+        const string StableGameId = "coin-catch"; const int GameIndex = 4;
+        MiniGameSession session; bool initialized;
+        public string GameId => StableGameId; public bool IsRunning => session != null && session.IsActive; public int Score => session?.Score ?? 0;
+        public event Action<int> ScoreChanged; public event Action<int> Completed;
+        void Awake() => Initialize();
+        public void Initialize(){ if(initialized)return; if(!GameCatalog.TryGet(GameId,out var d))throw new InvalidOperationException($"Missing game definition: {GameId}"); session=new MiniGameSession(d,GameIndex); session.ScoreChanged+=OnScore; session.Completed+=OnCompleted; initialized=true; }
+        public void StartGame(){Initialize();session.Start();AnalyticsService.RecordGameStarted(GameId);} public void PauseGame()=>session?.Pause(); public void ResumeGame()=>session?.Resume(); public void EndGame()=>session?.End();
+        public void CatchCoin(int points=1){if(IsRunning&&points>0)session.AddScore(points);} public void CompleteGame(){if(IsRunning)session.Complete();}
+        void OnScore(int v)=>ScoreChanged?.Invoke(v); void OnCompleted(int v){AnalyticsService.RecordGameCompleted(GameId,v,0);Completed?.Invoke(v);}
+        void OnDestroy(){if(session==null)return;session.ScoreChanged-=OnScore;session.Completed-=OnCompleted;}
     }
 }

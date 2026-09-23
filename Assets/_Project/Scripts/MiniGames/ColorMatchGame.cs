@@ -1,41 +1,39 @@
+using System;
+using MyIndieGame.Core;
 using UnityEngine;
 
 namespace MyIndieGame.MiniGames
 {
-    public sealed class ColorMatchGame : ProductionMiniGameBase
+    public sealed class ColorMatchGame : MonoBehaviour, IMiniGame
     {
-        public const string Id = "color-match";
-        public override string GameId => Id;
-
-        [SerializeField] int colorCount = 4;
-        [SerializeField] int pointsPerCorrect = 2;
-        [SerializeField] int wrongPenalty = 1;
-        int targetColor;
-        int rounds;
-
-        public int TargetColor => targetColor;
-        public int Rounds => rounds;
-        public int ColorCount => Mathf.Max(2, colorCount);
-
-        protected override void ResetGame()
+        private const string StableGameId = "color-match";
+        private const int DefaultIndex = 1;
+        private MiniGameSession _session;
+        private bool _initialized;
+        public string GameId => StableGameId;
+        public bool IsRunning => _session != null && _session.IsActive;
+        public int Score => _session?.Score ?? 0;
+        public event Action<int> ScoreChanged;
+        public event Action<int> Completed;
+        private void Awake() => Initialize();
+        public void Initialize()
         {
-            targetColor = 0;
-            rounds = 0;
+            if (_initialized) return;
+            if (!GameCatalog.TryGet(GameId, out var definition)) throw new InvalidOperationException($"Missing game definition: {GameId}");
+            _session = new MiniGameSession(definition, DefaultIndex);
+            _session.ScoreChanged += value => ScoreChanged?.Invoke(value);
+            _session.Completed += value => Completed?.Invoke(value);
+            _initialized = true;
         }
-
-        protected override void OnGameStarted() => NextRound();
-
-        public bool SelectColor(int colorIndex)
+        public void StartGame() { Initialize(); _session.Start(); }
+        public void PauseGame() => _session?.Pause();
+        public void ResumeGame() => _session?.Resume();
+        public void EndGame() => _session?.End();
+        public void SubmitMatch(bool matched, int points = 1)
         {
-            if (!IsRunning || colorIndex < 0 || colorIndex >= ColorCount) return false;
-            bool correct = colorIndex == targetColor;
-            rounds++;
-            if (correct) AddScore(Mathf.Max(0, pointsPerCorrect));
-            else if (wrongPenalty > 0) AddScore(-wrongPenalty);
-            NextRound();
-            return correct;
+            if (!IsRunning || !matched || points <= 0) return;
+            _session.AddScore(points);
         }
-
-        void NextRound() => targetColor = Random.Range(0, ColorCount);
+        public void CompleteGame() { if (IsRunning) _session.Complete(); }
     }
 }

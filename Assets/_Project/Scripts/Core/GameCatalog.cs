@@ -1,34 +1,24 @@
 using System;
-using System.Collections.Generic;
+using MyIndieGame.Core;
 
 namespace MyIndieGame.Core
 {
-    /// <summary>
-    /// Runtime lookup facade for the canonical mini-game catalog.
-    /// Accepts both stable public ids (kebab-case) and legacy catalog ids (snake_case).
-    /// </summary>
+    /// <summary>Compatibility facade for the production game catalog.</summary>
     public static class GameCatalog
     {
-        static readonly Dictionary<string, MiniGameDefinition> Lookup = BuildLookup();
-
         public static bool TryGet(string gameId, out MiniGameDefinition definition)
         {
             definition = null;
             if (string.IsNullOrWhiteSpace(gameId)) return false;
-            return Lookup.TryGetValue(Normalize(gameId), out definition) && definition != null && definition.IsAvailable;
-        }
-
-        static Dictionary<string, MiniGameDefinition> BuildLookup()
-        {
-            var map = new Dictionary<string, MiniGameDefinition>(StringComparer.OrdinalIgnoreCase);
-            foreach (var definition in MiniGameCatalog.All)
+            foreach (var item in MiniGameCatalog.All)
             {
-                if (definition == null || string.IsNullOrWhiteSpace(definition.Id)) continue;
-                map[Normalize(definition.Id)] = definition;
+                if (string.Equals(item.Id, gameId.Trim(), StringComparison.Ordinal))
+                {
+                    definition = item;
+                    return true;
+                }
             }
-            return map;
+            return false;
         }
-
-        static string Normalize(string value) => value.Trim().Replace('-', '_');
     }
 }

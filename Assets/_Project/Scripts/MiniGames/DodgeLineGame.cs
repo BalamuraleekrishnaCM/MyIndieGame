@@ -1,56 +1,39 @@
+using System;
+using MyIndieGame.Core;
 using UnityEngine;
 
 namespace MyIndieGame.MiniGames
 {
-    public sealed class DodgeLineGame : ProductionMiniGameBase
+    public sealed class DodgeLineGame : MonoBehaviour, IMiniGame
     {
-        public const string Id = "dodge-line";
-        public override string GameId => Id;
-
-        [SerializeField] int laneCount = 3;
-        [SerializeField] int pointsPerDodge = 1;
-        [SerializeField] int maxLives = 1;
-        int lane;
-        int lives;
-        int dodges;
-
-        public int Lane => lane;
-        public int LaneCount => Mathf.Max(2, laneCount);
-        public int Lives => lives;
-        public int Dodges => dodges;
-
-        protected override void ResetGame()
+        private const string StableGameId = "dodge-line";
+        private const int DefaultIndex = 3;
+        private MiniGameSession _session;
+        private bool _initialized;
+        public string GameId => StableGameId;
+        public bool IsRunning => _session != null && _session.IsActive;
+        public int Score => _session?.Score ?? 0;
+        public event Action<int> ScoreChanged;
+        public event Action<int> Completed;
+        private void Awake() => Initialize();
+        public void Initialize()
         {
-            lane = LaneCount / 2;
-            lives = Mathf.Max(1, maxLives);
-            dodges = 0;
+            if (_initialized) return;
+            if (!GameCatalog.TryGet(GameId, out var definition)) throw new InvalidOperationException($"Missing game definition: {GameId}");
+            _session = new MiniGameSession(definition, DefaultIndex);
+            _session.ScoreChanged += value => ScoreChanged?.Invoke(value);
+            _session.Completed += value => Completed?.Invoke(value);
+            _initialized = true;
         }
-
-        public void MoveLeft() => Move(-1);
-        public void MoveRight() => Move(1);
-
-        public void Move(int delta)
+        public void StartGame() { Initialize(); _session.Start(); }
+        public void PauseGame() => _session?.Pause();
+        public void ResumeGame() => _session?.Resume();
+        public void EndGame() => _session?.End();
+        public void RecordDodge(int points = 1)
         {
-            if (!IsRunning) return;
-            lane = Mathf.Clamp(lane + delta, 0, LaneCount - 1);
+            if (!IsRunning || points <= 0) return;
+            _session.AddScore(points);
         }
-
-        public void DodgeObstacle(int obstacleLane)
-        {
-            if (!IsRunning) return;
-            if (obstacleLane != lane)
-            {
-                dodges++;
-                AddScore(Mathf.Max(0, pointsPerDodge));
-            }
-            else HitObstacle();
-        }
-
-        public void HitObstacle()
-        {
-            if (!IsRunning) return;
-            lives = Mathf.Max(0, lives - 1);
-            if (lives == 0) CompleteGame();
-        }
+        public void CompleteGame() { if (IsRunning) _session.Complete(); }
     }
 }
