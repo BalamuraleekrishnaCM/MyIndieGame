@@ -1,62 +1,16 @@
+using System;
+using MyIndieGame.Core;
 using UnityEngine;
-
 namespace MyIndieGame.MiniGames
 {
-    public sealed class ParkingPuzzleGame : ProductionMiniGameBase
-    {
-        public const string Id = "parking-puzzle";
-        public override string GameId => Id;
-
-        [SerializeField] int gridWidth = 5;
-        [SerializeField] int gridHeight = 4;
-        [SerializeField] int targetMoves = 20;
-        [SerializeField] int pointsForExit = 100;
-        int carX;
-        int carY;
-        int moves;
-        bool exitOpen;
-
-        public int CarX => carX;
-        public int CarY => carY;
-        public int Moves => moves;
-        public bool ExitOpen => exitOpen;
-        public int GridWidth => Mathf.Max(3, gridWidth);
-        public int GridHeight => Mathf.Max(3, gridHeight);
-
-        protected override void ResetGame()
-        {
-            carX = 1;
-            carY = GridHeight / 2;
-            moves = 0;
-            exitOpen = false;
-        }
-
-        public bool MoveCar(int dx, int dy)
-        {
-            if (!IsRunning) return false;
-            int nx = Mathf.Clamp(carX + Mathf.Clamp(dx, -1, 1), 0, GridWidth - 1);
-            int ny = Mathf.Clamp(carY + Mathf.Clamp(dy, -1, 1), 0, GridHeight - 1);
-            if (nx == carX && ny == carY) return false;
-            carX = nx;
-            carY = ny;
-            moves++;
-            exitOpen = moves >= Mathf.Max(1, targetMoves);
-            return true;
-        }
-
-        public bool ClearObstacle()
-        {
-            if (!IsRunning) return false;
-            exitOpen = true;
-            return true;
-        }
-
-        public bool Exit()
-        {
-            if (!IsRunning || !exitOpen || carX != GridWidth - 1) return false;
-            AddScore(Mathf.Max(0, pointsForExit));
-            CompleteGame();
-            return true;
-        }
-    }
+ public sealed class ParkingPuzzleGame:MonoBehaviour,IMiniGame
+ {
+  const string Id="parking-puzzle"; const int Index=8; MiniGameSession session; bool initialized;
+  public string GameId=>Id; public bool IsRunning=>session!=null&&session.IsActive; public int Score=>session?.Score??0;
+  public event Action<int> ScoreChanged; public event Action<int> Completed;
+  void Awake()=>Initialize();
+  public void Initialize(){if(initialized)return;if(!GameCatalog.TryGet(GameId,out var d))throw new InvalidOperationException($"Missing game definition: {GameId}");session=new MiniGameSession(d,Index);session.ScoreChanged+=v=>ScoreChanged?.Invoke(v);session.Completed+=v=>Completed?.Invoke(v);initialized=true;}
+  public void StartGame(){Initialize();session.Start();AnalyticsService.RecordGameStarted(GameId);} public void PauseGame()=>session?.Pause(); public void ResumeGame()=>session?.Resume(); public void EndGame()=>session?.End();
+  public void CompleteMove(int points=1){if(IsRunning&&points>0)session.AddScore(points);} public void CompleteGame(){if(IsRunning)session.Complete();}
+ }
 }
