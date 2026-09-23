@@ -1,64 +1,19 @@
 using System;
-using System.Collections.Generic;
+using MyIndieGame.Core;
 using UnityEngine;
 
 namespace MyIndieGame.MiniGames
 {
-    public sealed class MemoryFlipGame : ProductionMiniGameBase
+    public sealed class MemoryFlipGame : MonoBehaviour, IMiniGame
     {
-        public const string Id = "memory-flip";
-        public override string GameId => Id;
-
-        [SerializeField] int pairCount = 6;
-        [SerializeField] int pointsPerPair = 10;
-        [SerializeField] int mismatchPenalty = 0;
-
-        readonly HashSet<int> matchedPairs = new HashSet<int>();
-        int firstCard = -1;
-        int matches;
-
-        public int Matches => matches;
-        public int PairCount => Mathf.Max(2, pairCount);
-        public bool HasFirstCard => firstCard >= 0;
-
-        protected override void ResetGame()
-        {
-            matchedPairs.Clear();
-            firstCard = -1;
-            matches = 0;
-        }
-
-        public bool SelectCard(int cardIndex, int pairId)
-        {
-            if (!IsRunning || cardIndex < 0 || matchedPairs.Contains(pairId)) return false;
-
-            if (firstCard < 0)
-            {
-                firstCard = cardIndex;
-                return true;
-            }
-
-            if (cardIndex == firstCard) return false;
-
-            bool matched = pairId == PairIdForCard(firstCard);
-            if (matched)
-            {
-                matchedPairs.Add(pairId);
-                matches++;
-                AddScore(Mathf.Max(0, pointsPerPair));
-                if (matches >= PairCount) CompleteGame();
-            }
-            else if (mismatchPenalty > 0)
-            {
-                // Score remains non-negative; penalties are represented by zero-point mismatch events.
-                AddScore(0);
-            }
-
-            firstCard = -1;
-            return matched;
-        }
-
-        // UI/controllers should supply a stable pair mapping. The default mapping is deterministic.
-        static int PairIdForCard(int cardIndex) => Math.Max(0, cardIndex / 2);
+        const string StableGameId = "memory-flip"; const int GameIndex = 5;
+        MiniGameSession session; bool initialized;
+        public string GameId=>StableGameId; public bool IsRunning=>session!=null&&session.IsActive; public int Score=>session?.Score??0;
+        public event Action<int> ScoreChanged; public event Action<int> Completed;
+        void Awake()=>Initialize();
+        public void Initialize(){if(initialized)return;if(!GameCatalog.TryGet(GameId,out var d))throw new InvalidOperationException($"Missing game definition: {GameId}");session=new MiniGameSession(d,GameIndex);session.ScoreChanged+=OnScore;session.Completed+=OnCompleted;initialized=true;}
+        public void StartGame(){Initialize();session.Start();AnalyticsService.RecordGameStarted(GameId);} public void PauseGame()=>session?.Pause(); public void ResumeGame()=>session?.Resume(); public void EndGame()=>session?.End();
+        public void MatchPair(bool matched,int points=1){if(IsRunning&&matched&&points>0)session.AddScore(points);} public void CompleteGame(){if(IsRunning)session.Complete();}
+        void OnScore(int v)=>ScoreChanged?.Invoke(v);void OnCompleted(int v){AnalyticsService.RecordGameCompleted(GameId,v,0);Completed?.Invoke(v);}void OnDestroy(){if(session==null)return;session.ScoreChanged-=OnScore;session.Completed-=OnCompleted;}
     }
 }
